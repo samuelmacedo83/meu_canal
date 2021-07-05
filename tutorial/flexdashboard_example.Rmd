@@ -1,0 +1,91 @@
+---
+title: "Meu dashboard"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+runtime: shiny
+---
+
+```{r setup, include=FALSE}
+
+# roteiro
+#
+# como criar o arquivo
+# tamanho da divisão
+# por row e por col
+# vertical_layout fill e scroll
+# tirar os dashes e criação de outras páginas
+# botar os gráficos estáticos ( até usar o knitr::kable)
+# criar o sidebar (runtime: shiny)
+# renderPlot e renderTable (não precisa mais do kable)
+# botar o input$coluna e explicar o !!sym
+# é isso ai :)
+
+
+
+
+
+
+knitr::opts_chunk$set(warning = FALSE)
+library(flexdashboard)
+library(dplyr)
+library(ggplot2)
+
+df <- iris
+```
+ Column {.sidebar}
+-----------------------------------------------------------------------
+
+```{r}
+selectInput(
+  "coluna", label = "Escolha a coluna",
+  choices =  c("Sepal.Length", "Sepal.Width", "Petal.Length", "Petal.Width"),
+  selected = "Sepal.Length"
+)
+```
+
+
+Column {data-width=500}
+-----------------------------------------------------------------------
+
+### Boxplot
+
+```{r}
+renderPlot({
+
+df %>% 
+  ggplot() + 
+  aes(y = !!sym(input$coluna) , fill = Species) +
+  geom_boxplot() +
+  theme(legend.position = "top")
+})
+
+```
+
+Column {data-width=500}
+-----------------------------------------------------------------------
+
+### Histograma
+
+```{r}
+renderPlot({
+  df %>% 
+  ggplot() + 
+  aes(x = !!sym(input$coluna)) +
+  geom_histogram() +
+  theme(legend.position = "top")
+})
+```
+
+### Sumário
+
+```{r}
+renderTable({
+   df %>% 
+    group_by(Species) %>%
+    summarise(Média = mean(!!sym(input$coluna)),
+              Mediana = median(!!sym(input$coluna))) 
+})
+```
+
