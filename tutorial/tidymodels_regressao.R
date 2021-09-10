@@ -10,12 +10,6 @@ splits <- initial_split(iris_b, strata = Species)
 iris_trainning <- training(splits)
 iris_testing <- testing(splits)
 
-# engine
-reg_mod <- linear_reg(
-  penalty = tune(), mixture = tune()
-) %>% 
-  set_engine("glmnet")
-
 #recipe
 reg_recipe <- recipe(
   Petal.Length ~ ., data = iris_trainning
@@ -23,6 +17,13 @@ reg_recipe <- recipe(
   step_impute_knn(all_predictors()) %>% 
   step_dummy(all_nominal_predictors()) %>% 
   step_normalize(all_numeric_predictors())
+
+# engine
+reg_mod <- linear_reg(
+  penalty = tune(), mixture = tune()
+) %>% 
+  set_engine("glmnet") 
+  
 
 # workflow
 reg_workflow <- workflow() %>% 

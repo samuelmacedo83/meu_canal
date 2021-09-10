@@ -1,0 +1,169 @@
+---
+title: "App do 3 RDay"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: rows
+    vertical_layout: fill
+runtime: shiny
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(tidymodels)
+library(scales)
+```
+
+```{r}
+class_fitted <- readRDS("class_fitted")
+reg_fitted <- readRDS("reg_fitted")
+```
+
+Estimativa do Preço
+=====================================================================
+
+
+Column {.sidebar}
+-----------------------------------------------------------------------
+
+```{r}
+
+selectInput(
+  inputId = "status",
+  label = "Novo ou usado?",
+  choices = c("Novo" = "NEW", "Usado" = "RENEWED")
+)
+
+numericInput(
+  inputId = "reviews",
+  label = "Quantos reviews?",
+  value = 5
+)
+
+numericInput(
+  inputId = "rating",
+  label = "Qual a nota?",
+  value = 4.5
+)
+
+selectInput(
+  inputId = "brand",
+  label = "Qual a marca?",
+  choices = c("APPLE", "HP", "ACER", "ASUS", "FUJITSU",
+  "COMPAC", "LENOVO", "DELL", "TOSHIBA")
+)
+
+```
+
+Row {data-height=200}
+-----------------------------------------------------------------------
+
+### Preço Estimado
+
+```{r}
+reg_pred <- reactive({
+  reg_df <- data.frame(
+    reviews = input$reviews,
+    rating  = input$rating,
+    brand   = input$brand,
+    status  = input$status
+  )
+  
+  predict(reg_fitted, reg_df)
+})
+```
+
+
+
+```{r}
+renderValueBox({
+  valueBox(
+    value = dollar(reg_pred()$.pred),
+    caption = "Estimativa do preço",
+    icon = "fa-money-check-alt",
+    color = "navy")
+})
+```
+
+Row {data-height=800}
+-----------------------------------------------------------------------
+
+
+
+
+
+Estimativa da Marca
+=====================================================================
+
+Column {.sidebar}
+-----------------------------------------------------------------------
+
+```{r}
+
+selectInput(
+  inputId = "status",
+  label = "Novo ou usado?",
+  choices = c("Novo" = "NEW", "Usado" = "RENEWED")
+)
+
+numericInput(
+  inputId = "reviews",
+  label = "Quantos reviews?",
+  value = 5
+)
+
+numericInput(
+  inputId = "rating",
+  label = "Qual a nota?",
+  value = 4.5
+)
+
+numericInput(
+  inputId = "price",
+  label = "Quanto é o preço?",
+  value = 5000
+)
+
+```
+
+
+
+Row {data-height=200}
+-----------------------------------------------------------------------
+
+### Marca Estimada
+
+```{r}
+class_pred <- reactive({
+  class_df <- data.frame(
+    reviews = input$reviews,
+    rating  = input$rating,
+    price   = input$price,
+    status  = input$status
+  )
+  
+  predict(class_fitted, class_df)
+})
+```
+
+
+```{r}
+renderValueBox({
+  valueBox(
+    value = class_pred()$.pred_class,
+    caption = "Estimativa da Marca",
+    icon = "fa-laptop",
+    color = "navy")
+})
+```
+
+Row {data-height=800}
+-----------------------------------------------------------------------
+
+
+
+
+
+
+
+
+

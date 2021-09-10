@@ -24,6 +24,8 @@ ames_recipe <- recipe(
   data = ames_train
   ) %>% 
   step_log(Gr_Liv_Area, base = 10) %>% 
+  step_ns(Longitude, deg_free = tune("df_long")) %>%
+  step_ns(Latitude, deg_free = tune("df_lat"))
   step_ns(Longitude, Latitude) 
 
 # step_ns(Longitude, deg_free = tune("df_long")) %>%
@@ -56,9 +58,6 @@ ames_param <- ames_workflow %>%
     `df_long` = deg_free(), # spline_degree()
     `df_lat` = deg_free()
   )
-
-# craindo o grid
-grid_param <- grid_max_entropy(ames_param, size = 10)
 
 # cross validation
 cv_splits <- vfold_cv(

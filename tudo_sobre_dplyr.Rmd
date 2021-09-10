@@ -1,0 +1,413 @@
+---
+title: "Tudo que você precisa saber sobre dplyr"
+output: html_notebook
+---
+
+
+# INTRODUÇÃO
+
+```{r}
+# transformando em tibble
+iris_tbl <- dplyr::as_tibble(iris)
+
+# visualização (também serve com df)
+glimpse(iris_tbl)
+
+# uso do pipe
+iris_tbl %>% 
+  glimpse()
+
+iris %>% 
+  as_tibble() %>% 
+  glimpse()
+```
+
+# manipular por linhas 
+
+Usando o filter
+```{r}
+iris_tbl %>% 
+  filter(Species == "setosa")
+
+iris_tbl %>% 
+  filter(Species == "setosa", Sepal.Length > 5) # ou com &
+
+iris_tbl %>% 
+  filter(between(Sepal.Length, 5, 5.5))
+
+iris_tbl %>% 
+  filter(near(Sepal.Length, 5))
+```
+
+Usando o distinct
+```{r}
+iris_tbl %>% 
+  distinct(Species, .keep_all = TRUE)  # .keep_all e distinct mais de uma variável
+```
+
+usando o slice 
+```{r}
+iris_tbl %>% 
+  slice(1:5)  # 40:49
+
+iris_tbl %>% 
+  slice(5)
+
+iris_tbl %>% 
+  slice(c(2,4,7))
+
+iris_tbl %>% 
+  slice_head(n = 6)
+
+iris_tbl %>% 
+  slice_tail(n = 6)
+
+iris_tbl %>% 
+  slice_max(Sepal.Length, n = 5)
+
+iris %>% 
+  slice_sample(n = 2)
+
+```
+ 
+# manipular por colunas
+
+usando pull
+```{r}
+# ele é o equivalente o $   positivos e negativos
+
+iris_tbl %>% 
+  pull()
+
+iris_tbl %>% 
+  pull(1)
+
+iris_tbl %>% 
+  pull(-1)
+
+iris_tbl %>% 
+  pull(Sepal.Length)
+```
+
+usando o rename
+
+```{r}
+iris_tbl %>% 
+  rename(Sepal_Length = Sepal.Length)
+
+iris_tbl %>% 
+  rename(
+    Sepal_Length = Sepal.Length,
+    Petal_Length = Petal.Length
+  )
+
+iris_tbl %>% 
+  rename_with(toupper)
+
+iris_tbl %>% 
+  rename_with(toupper, .cols = starts_with("Sepal"))
+
+
+```
+
+usando o select
+
+```{r}
+iris_tbl %>% 
+  select(Sepal.Length, Sepal.Width)  # 1,2 não aconselho
+
+names(iris)
+
+iris_tbl %>% 
+  select(Sepal.Width:Petal.Width)
+
+iris_tbl %>% 
+  select(starts_with("Sepal"))
+
+iris_tbl %>% 
+  select(ends_with("Length"))
+
+iris_tbl %>% 
+  select(starts_with(c("Sepal", "Petal")))
+
+iris_tbl %>% 
+  select(contains("tal"))
+
+iris_tbl %>% 
+  select(matches("[pt]al"))
+
+iris_tbl %>% 
+  select(
+    Sepal_Length = Sepal.Length, 
+    Petal_Length = Petal.Length
+  )
+
+```
+
+# Criando colunas
+
+mutate e transmute
+
+```{r}
+iris_tbl %>% 
+  mutate(Sepal.Length_2 = Sepal.Length + 2) 
+
+iris_tbl %>% 
+  mutate(Sepal.Length = Sepal.Length + 2)
+
+
+iris_tbl %>% 
+  mutate(
+    Sepal.Length = Sepal.Length + 2, 
+    Petal.Length_2 = Petal.Length * 2,
+    Species = toupper(Species)
+  )
+
+iris_tbl %>% 
+  mutate(
+    Sepal.Length = Sepal.Length + 2, 
+    Sepal.Length = Sepal.Length + 2
+  )
+
+
+iris_tbl %>% 
+  transmute(Sepal.Length = Sepal.Length + 2)
+
+
+iris_tbl %>% 
+ transmute(
+    Sepal.Length = Sepal.Length + 2, 
+    Petal.Length_2 = Petal.Length * 2,
+    Species = toupper(Species)
+  )
+
+```
+
+operações cumulativas
+
+```{r}
+iris_tbl %>% 
+  transmute(
+    Sepal.Length, 
+    Sepal.Length_t = cumany(Sepal.Length >= 4.7)  # cumsum cummean cummin cummax
+  )                                               # cumany cumall(Sepal.Length >= 4.7)
+```
+
+operações de rank
+```{r}
+x <- c(10, 2, 6, 4, 4, NA)
+x
+row_number(x)
+
+x
+min_rank(x)
+
+x
+dense_rank(x)
+
+x
+percent_rank(x)
+
+x
+cume_dist(x)
+
+```
+
+
+```{r}
+iris_tbl %>% 
+  mutate(Sepal.Length_t = if_else(
+    Sepal.Length >= 4.7, 0, 1 
+  )) %>% 
+  select(Sepal.Length, Sepal.Length_t)
+
+iris_tbl %>% 
+  mutate(Sepal.Length_t = case_when(
+    Sepal.Length <= 4.6 ~ 0,
+    Sepal.Length == 4.7 ~ 1,
+    TRUE ~ 2
+  )) %>% 
+  select(Sepal.Length, Sepal.Length_t)
+```
+
+# group_by
+
+summarise
+```{r}
+iris_tbl %>% 
+  group_by(Species) %>% 
+  summarise(media = mean(Sepal.Length))
+
+iris_tbl %>% 
+  group_by(Species) %>% 
+  summarise(
+    media = mean(Sepal.Length),
+    mediana = median(Sepal.Length)
+  )
+
+iris_tbl %>% 
+  mutate(Sepal.Length = if_else(
+    Sepal.Length > 5, 1, 0
+  )) %>% 
+  group_by(Species, Sepal.Length) %>% 
+  summarise(
+    media_width= mean(Sepal.Width),
+    mediana_width = median(Sepal.Width)
+  )
+```
+
+filter e mutate
+```{r}
+iris_tbl %>% 
+  group_by(Species) %>% 
+  filter(Sepal.Length > 5) # mean(Sepal.Length)
+
+iris_tbl %>% 
+  group_by(Species) %>% 
+  mutate(Sepal.Length_m = mean(Sepal.Length)) %>% 
+  select(Species, Sepal.Length_m) 
+```
+
+# joins
+```{r}
+band_members
+band_instruments
+
+# mutate joins
+band_members %>%
+  inner_join(band_instruments, by = "name")
+
+band_members %>% 
+  left_join(band_instruments, by = "name")
+
+band_members %>% 
+  right_join(band_instruments, by = "name")
+
+band_members %>% 
+  full_join(band_instruments, by = "name")
+
+# filter joins
+band_members %>%
+  semi_join(band_instruments, by = "name")
+
+band_members %>%
+  anti_join(band_instruments, by = "name")
+
+# id diferente
+band_members %>% 
+  rename(name2 = name) %>% 
+  left_join(band_instruments, by = c("name2" = "name"))
+
+# dois ids
+band_members$n <- 2
+band_instruments$n <- 1:3
+  
+band_members %>% 
+  inner_join(band_instruments, by = c("name", "n"))
+
+
+```
+
+# rowwise
+
+```{r}
+#https://www.tidyverse.org/blog/2020/04/dplyr-1-0-0-rowwise/
+notas <- tibble(
+  aluno = 1:4, 
+  prova1 = c(8, 4, 7, 8), 
+  prova2 = c(9, 6, 9, 8),  
+  prova3 = c(10, 8, 7, 7),  
+  prova4 = c(9, 8, 9, 9), 
+)
+
+notas  %>% 
+  mutate(media = mean(c(prova1, prova2, prova3, prova4)))
+
+notas  %>% 
+  mutate(media = (prova1 + prova2 + prova3 + prova4)/ 4)
+
+notas  %>% 
+  rowwise(aluno) %>% 
+  mutate(media = mean(c(prova1, prova2, prova3, prova4))) 
+
+notas  %>% 
+  rowwise(aluno) %>% 
+  mutate(media = mean(c_across(starts_with("prova"))))
+
+# apelação
+df <- tibble(
+  valor = list(1:2, 2:10, 4:100),
+  funcao = list(sum, mean, sd)
+)
+
+df %>% 
+  rowwise() %>% 
+  summarise(
+    tam = length(valor),
+    classe = class(valor),
+    resultado = funcao(valor),
+    .groups = "keep"   # rowwise
+  )
+```
+
+# combinar tabelas
+
+```{r}
+df1 <- tibble(
+  a = c(1, 1, 1, 4),
+  b = c(2, 2, 2, 5)
+) 
+
+df2 <- tibble(
+  a = c(3, 1, 1, 2),  # c e d
+  b = c(2, 2, 2, 2)
+)
+  
+bind_rows(df1, df2)
+
+df1 <- tibble(
+  a = c(1, 1, 1, 4),
+  b = c(2, 2, 2, 5)
+) 
+
+df2 <- tibble(
+  c = c(3, 1, 1, 2),  # c e d
+  d = c(2, 2, 2, 2)
+)
+  
+bind_cols(df1, df2)
+
+# intersect
+df1 <- tibble(
+  a = c(1, 1, 1, 4),
+  b = c(2, 2, 2, 5)
+) 
+
+df2 <- tibble(
+  a = c(3, 1, 1, 2),  # c e d
+  b = c(2, 2, 2, 2)
+)
+
+intersect(df1, df2) 
+setdiff(df1, df2)
+setdiff(df2, df1)
+union(df1, df2)
+union_all(df1, df2)
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
